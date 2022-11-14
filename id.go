@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sony/sonyflake"
 )
@@ -23,6 +24,16 @@ type ID struct {
 	sf       *sonyflake.Sonyflake
 }
 
+type DecodedID struct {
+	Prefix       string
+	Tail         string
+	Snowflake    uint64
+	MachineID    uint64
+	ElapsedTime  time.Duration
+	Sequence     uint64
+	PrefixRecord *PrefixRecord
+}
+
 func New(prefixes []*PrefixRecord, st sonyflake.Settings) *ID {
 	sf := sonyflake.NewSonyflake(st)
 
@@ -30,6 +41,29 @@ func New(prefixes []*PrefixRecord, st sonyflake.Settings) *ID {
 		prefixes,
 		sf,
 	}
+}
+
+func (i *ID) Deconstruct(id string) (*DecodedID, error) {
+	s := strings.Split(id, "_")
+	prefix, tail := s[0], s[1]
+
+	_, prefixRecord := find(i.prefixes, prefix)
+	uDec, _ := b64.URLEncoding.DecodeString(tail)
+	decodedTail := string(uDec)
+	sf, err := strconv.ParseUint(decodedTail, 10, 64)
+	if err != nil {
+		return &DecodedID{}, err
+	}
+
+	return &DecodedID{
+		Prefix:       prefix,
+		Tail:         tail,
+		Snowflake:    sf,
+		MachineID:    sonyflake.MachineID(sf),
+		ElapsedTime:  sonyflake.ElapsedTime(sf),
+		Sequence:     sonyflake.SequenceNumber(sf),
+		PrefixRecord: prefixRecord,
+	}, nil
 }
 
 func (i *ID) Generate(prefix string) (string, error) {
