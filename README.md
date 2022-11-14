@@ -23,6 +23,8 @@ func main() {
 	}, sonyflake.Settings{})
 
 	fmt.Println(generator.Generate("user"))
+	// user_NDM0NDAzNzQ0MDI5ODY4MzIx <nil>
 	fmt.Println(generator.Generate("bearer"))
+	// bearer_c182OTIwMzJmZGUwNmQ5ODAzMTQ0ZmQ0ZDlkNDliYzlhZF80MzQ0MDM3NDQwMjk5MzM4NTc <nil>
 }
 ```
